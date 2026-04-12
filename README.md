@@ -275,7 +275,7 @@ Encerra o sistema exibindo uma mensagem de despedida e fecha o `Scanner` para li
 
 1. **Navegue até o diretório do projeto:**
    ```bash
-   cd bibliotecasystem
+   cd '.\Sistema de Biblioteca em Java\'
    ```
 
 2. **Compile todos os arquivos Java:**
