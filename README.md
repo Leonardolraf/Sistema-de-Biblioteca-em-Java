@@ -9,6 +9,7 @@
 - Leonardo Rodrigues Amorim Filho
 - Caio Eduardo Moura dos Santos
 - Caio Monte Lopes
+- Caio Gabriel Timotio Rodrigues de Lima
 
 ---
 
