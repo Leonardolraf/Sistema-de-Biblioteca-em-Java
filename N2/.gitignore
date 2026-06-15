@@ -1,0 +1,14 @@
+# Classes compiladas
+out/
+*.class
+
+# Arquivos transitórios do SQLite (o banco biblioteca.db É versionado: é entregável)
+*.db-journal
+*.db-wal
+*.db-shm
+
+# Sistema operacional / IDE
+.DS_Store
+.idea/
+*.iml
+.vscode/

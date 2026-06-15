@@ -13,6 +13,10 @@
 
 ---
 
+> 🚀 **Etapa 2 (N2) — Evolução do projeto:** esta versão inicial armazena os dados em memória (`ArrayList`) e registra o histórico em arquivo de texto. A evolução do sistema — com **persistência em SQLite** e os padrões de projeto **Singleton**, **Factory** e **Repository/Interface** — está na pasta **[`N2/`](./N2)**. Comece pelo [README do N2](./N2/README.md).
+
+---
+
 ## Descrição do Projeto
 
 Sistema completo de gerenciamento de biblioteca desenvolvido em Java, baseado nos princípios de Programação Orientada a Objetos (POO). O sistema permite o cadastro de livros e usuários (alunos e professores), controle de empréstimos e devoluções, com regras de negócio que limitam a quantidade de livros por tipo de usuário.
