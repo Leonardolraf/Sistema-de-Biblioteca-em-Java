@@ -1,0 +1,9 @@
+==========================================================
+     HISTÓRICO DO SISTEMA DE BIBLIOTECA - UCB             
+==========================================================
+
+[03/05/2026 18:31:12] CADASTRO_LIVRO - Livro cadastrado -> ID: 1 | Título: Leo come gabriel | Autor: Leo
+[03/05/2026 18:31:25] CADASTRO_USUARIO - Usuário cadastrado -> ID: 1 | Nome: Leo | Tipo: Aluno | Matrícula: 1
+[03/05/2026 18:31:39] CADASTRO_USUARIO - Usuário cadastrado -> ID: 2 | Nome: Gabriel | Tipo: Professor | Departamento: Dador de cu 
+[03/05/2026 18:32:02] EMPRESTIMO - Empréstimo realizado -> Usuário: Gabriel (Professor) | Livro: Leo come gabriel (ID: 1)
+[03/05/2026 18:33:59] DEVOLUCAO - Devolução realizada -> Usuário: Gabriel (Professor) | Livro: Leo come gabriel (ID: 1)
