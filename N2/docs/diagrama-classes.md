@@ -1,8 +1,13 @@
 # Diagrama de Classes — atualizado (N2)
 
-Duas versões do mesmo diagrama: **Mermaid** (renderiza direto no GitHub/VS Code) e
-**PlantUML** (cole em https://www.plantuml.com/plantuml para exportar um PNG, caso a
-entrega exija imagem).
+Imagem (PNG) abaixo. As fontes que a geram também estão neste diretório:
+`diagrama-classes.puml` (PlantUML) e o bloco **Mermaid** mais abaixo (renderiza
+direto no GitHub/VS Code).
+
+![Diagrama de Classes - N2](./diagrama-classes.png)
+
+> PNG gerado a partir de `diagrama-classes.puml` com PlantUML
+> (`java -jar plantuml.jar -tpng -Smetana diagrama-classes.puml`).
 
 ---
 

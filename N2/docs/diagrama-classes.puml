@@ -1,0 +1,142 @@
+@startuml
+title Sistema de Biblioteca - N2 (Diagrama de Classes)
+
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam packageStyle rectangle
+
+package model {
+  abstract class Usuario {
+    - id : int
+    - nome : String
+    - livrosEmprestados : int
+    + {abstract} getLimiteEmprestimos() : int
+    + {abstract} getTipoUsuario() : String
+    + {abstract} getDetalhe() : String
+    + podeEmprestar() : boolean
+  }
+  class Aluno {
+    - LIMITE_EMPRESTIMOS : int = 3
+    - matricula : String
+  }
+  class Professor {
+    - LIMITE_EMPRESTIMOS : int = 5
+    - departamento : String
+  }
+  class Livro {
+    - id : int
+    - titulo : String
+    - autor : String
+    - disponivel : boolean
+    + getStatusTexto() : String
+  }
+  class Emprestimo {
+    - dataEmprestimo : String
+    - dataDevolucao : String
+    - status : String
+    + isAtivo() : boolean
+  }
+}
+
+package factory {
+  class UsuarioFactory <<Factory>> {
+    + {static} criar(tipo, id, nome, detalhe) : Usuario
+    + {static} criarPorOpcao(opcao, id, nome, detalhe) : Usuario
+  }
+}
+
+package database {
+  class DatabaseConnection <<Singleton>> {
+    - {static} instancia : DatabaseConnection
+    - conexao : Connection
+    - DatabaseConnection()
+    + {static} getInstance() : DatabaseConnection
+    + getConexao() : Connection
+  }
+}
+
+package repository {
+  interface LivroRepository {
+    + salvar(Livro)
+    + buscarPorId(int) : Livro
+    + listarTodos() : List
+    + atualizarDisponibilidade(int, boolean)
+  }
+  interface UsuarioRepository {
+    + salvar(Usuario)
+    + buscarPorId(int) : Usuario
+    + listarTodos() : List
+  }
+  interface EmprestimoRepository {
+    + registrar(Emprestimo)
+    + devolverPorLivro(int) : boolean
+    + contarAtivosPorUsuario(int) : int
+    + livroTemEmprestimoAtivo(int) : boolean
+    + listarAtivos() : List
+    + listarTodos() : List
+  }
+  class LivroRepositorySQLite
+  class UsuarioRepositorySQLite
+  class EmprestimoRepositorySQLite
+}
+
+package service {
+  class Biblioteca <<service>> {
+    + adicionarLivro(Livro) : boolean
+    + adicionarUsuario(Usuario) : boolean
+    + realizarEmprestimo(int, int)
+    + realizarDevolucao(int)
+    + listarLivros()
+    + listarUsuarios()
+    + listarEmprestimosAtivos()
+    + listarHistoricoEmprestimos()
+  }
+}
+
+package ui {
+  class AcoesMenu
+}
+
+package main {
+  class Main
+}
+
+' ---- Heranca ----
+Usuario <|-- Aluno
+Usuario <|-- Professor
+
+' ---- Associacoes do modelo ----
+Emprestimo --> Usuario
+Emprestimo --> Livro
+
+' ---- Factory ----
+UsuarioFactory ..> Aluno : cria
+UsuarioFactory ..> Professor : cria
+
+' ---- Implementacao das interfaces ----
+LivroRepository <|.. LivroRepositorySQLite
+UsuarioRepository <|.. UsuarioRepositorySQLite
+EmprestimoRepository <|.. EmprestimoRepositorySQLite
+
+' ---- Repositorios usam o Singleton ----
+LivroRepositorySQLite ..> DatabaseConnection
+UsuarioRepositorySQLite ..> DatabaseConnection
+EmprestimoRepositorySQLite ..> DatabaseConnection
+UsuarioRepositorySQLite ..> UsuarioFactory
+
+' ---- Servico depende das interfaces ----
+Biblioteca --> LivroRepository
+Biblioteca --> UsuarioRepository
+Biblioteca --> EmprestimoRepository
+
+' ---- UI e Main ----
+AcoesMenu ..> Biblioteca
+AcoesMenu ..> UsuarioFactory
+Main ..> Biblioteca
+Main ..> AcoesMenu
+Main ..> DatabaseConnection
+Main ..> LivroRepositorySQLite
+Main ..> UsuarioRepositorySQLite
+Main ..> EmprestimoRepositorySQLite
+
+@enduml
