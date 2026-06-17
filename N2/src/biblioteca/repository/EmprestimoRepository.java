@@ -34,6 +34,9 @@ public interface EmprestimoRepository {
     // Lista apenas os empréstimos ativos no momento.
     List<Emprestimo> listarAtivos();
 
+    // Lista apenas os empréstimos já devolvidos (status 'DEVOLVIDO').
+    List<Emprestimo> listarDevolvidos();
+
     // Lista todos os empréstimos (ativos + devolvidos) = histórico completo.
     List<Emprestimo> listarTodos();
 }

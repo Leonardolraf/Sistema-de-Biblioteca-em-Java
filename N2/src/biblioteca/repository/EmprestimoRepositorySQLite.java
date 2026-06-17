@@ -60,7 +60,7 @@ public class EmprestimoRepositorySQLite implements EmprestimoRepository {
         String sql = "UPDATE emprestimos SET status = 'DEVOLVIDO', data_devolucao = ? "
                    + "WHERE id_livro = ? AND status = 'ATIVO';";
         try (PreparedStatement ps = getConexao().prepareStatement(sql)) {
-            ps.setString(1, agora());
+            ps.setString(1, Emprestimo.agora());
             ps.setInt(2, idLivro);
             int linhasAfetadas = ps.executeUpdate();
             return linhasAfetadas > 0;
@@ -108,6 +108,11 @@ public class EmprestimoRepositorySQLite implements EmprestimoRepository {
     }
 
     @Override
+    public List<Emprestimo> listarDevolvidos() {
+        return listar("SELECT * FROM emprestimos WHERE status = 'DEVOLVIDO' ORDER BY id;");
+    }
+
+    @Override
     public List<Emprestimo> listarTodos() {
         return listar("SELECT * FROM emprestimos ORDER BY id;");
     }
@@ -120,6 +125,11 @@ public class EmprestimoRepositorySQLite implements EmprestimoRepository {
             while (rs.next()) {
                 Livro livro = livroRepository.buscarPorId(rs.getInt("id_livro"));
                 Usuario usuario = usuarioRepository.buscarPorId(rs.getInt("id_usuario"));
+                // Defesa: ignora linhas órfãs (livro/usuário inexistente) para não quebrar
+                // a listagem caso o banco seja editado por fora.
+                if (livro == null || usuario == null) {
+                    continue;
+                }
                 emprestimos.add(new Emprestimo(
                         usuario,
                         livro,
@@ -133,11 +143,5 @@ public class EmprestimoRepositorySQLite implements EmprestimoRepository {
                     + excecao.getMessage(), excecao);
         }
         return emprestimos;
-    }
-
-    // Data/hora atual no padrão brasileiro, para gravar nas colunas de data.
-    private String agora() {
-        return java.time.LocalDateTime.now()
-                .format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss"));
     }
 }

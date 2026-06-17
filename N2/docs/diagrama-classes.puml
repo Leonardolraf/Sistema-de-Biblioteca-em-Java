@@ -35,6 +35,7 @@ package model {
     - dataDevolucao : String
     - status : String
     + isAtivo() : boolean
+    + {static} agora() : String
   }
 }
 
@@ -52,6 +53,7 @@ package database {
     - DatabaseConnection()
     + {static} getInstance() : DatabaseConnection
     + getConexao() : Connection
+    + fechar()
   }
 }
 
@@ -73,6 +75,7 @@ package repository {
     + contarAtivosPorUsuario(int) : int
     + livroTemEmprestimoAtivo(int) : boolean
     + listarAtivos() : List
+    + listarDevolvidos() : List
     + listarTodos() : List
   }
   class LivroRepositorySQLite
@@ -84,17 +87,30 @@ package service {
   class Biblioteca <<service>> {
     + adicionarLivro(Livro) : boolean
     + adicionarUsuario(Usuario) : boolean
-    + realizarEmprestimo(int, int)
-    + realizarDevolucao(int)
+    + realizarEmprestimo(int, int) : String
+    + realizarDevolucao(int) : String
     + listarLivros()
     + listarUsuarios()
     + listarEmprestimosAtivos()
+    + listarEmprestimosDevolvidos()
     + listarHistoricoEmprestimos()
   }
 }
 
 package ui {
-  class AcoesMenu
+  class AcoesMenu {
+    + imprimirMenuPrincipal()
+    + cadastrarLivro(Scanner, Biblioteca)
+    + cadastrarUsuario(Scanner, Biblioteca)
+    + realizarEmprestimo(Scanner, Biblioteca)
+    + realizarDevolucao(Scanner, Biblioteca)
+    + exibirMenuHistorico(Scanner, Biblioteca)
+  }
+  class EntradaConsole <<helper>> {
+    + {static} lerInteiro(Scanner, String) : int
+    + {static} lerInteiroPositivo(Scanner, String) : int
+    + {static} lerTextoObrigatorio(Scanner, String) : String
+  }
 }
 
 package main {
@@ -132,8 +148,10 @@ Biblioteca --> EmprestimoRepository
 ' ---- UI e Main ----
 AcoesMenu ..> Biblioteca
 AcoesMenu ..> UsuarioFactory
+AcoesMenu ..> EntradaConsole
 Main ..> Biblioteca
 Main ..> AcoesMenu
+Main ..> EntradaConsole
 Main ..> DatabaseConnection
 Main ..> LivroRepositorySQLite
 Main ..> UsuarioRepositorySQLite

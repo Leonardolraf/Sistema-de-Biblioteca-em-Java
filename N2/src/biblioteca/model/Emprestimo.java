@@ -1,5 +1,8 @@
 package biblioteca.model;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+
 /***********************************************************************************
  * Universidade Católica de Brasília - UCB                                         *
  * Disciplina: Programação Orientada a Objetos                                     *
@@ -16,6 +19,16 @@ package biblioteca.model;
 public class Emprestimo {
     public static final String ATIVO = "ATIVO";
     public static final String DEVOLVIDO = "DEVOLVIDO";
+
+    // Formato único de data/hora usado em todo o sistema (empréstimo e devolução).
+    private static final DateTimeFormatter FORMATO_DATA_HORA =
+            DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
+
+    // Carimbo de data/hora atual no padrão brasileiro. Centralizado aqui para não
+    // duplicar o formatador no serviço e no repositório (DRY).
+    public static String agora() {
+        return LocalDateTime.now().format(FORMATO_DATA_HORA);
+    }
 
     private Usuario usuario;
     private Livro livro;

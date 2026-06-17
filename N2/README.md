@@ -47,7 +47,7 @@ src/biblioteca/
 ├── factory/       → UsuarioFactory (FACTORY de Aluno/Professor)
 ├── repository/    → INTERFACES (...Repository) + implementações SQLite (...RepositorySQLite)
 ├── service/       → Biblioteca (regras de negócio; depende só das interfaces)
-└── ui/            → AcoesMenu (interface de terminal via Scanner)
+└── ui/            → AcoesMenu (menu) + EntradaConsole (leitura segura via Scanner)
 ```
 
 **Fluxo das dependências:** `Main` monta tudo → injeta os repositórios no `service`
@@ -120,9 +120,12 @@ resolve o N:N entre usuários e livros ao longo do tempo). As FKs garantem integ
 5 - Listar livros
 6 - Listar usuários cadastrados
 7 - Listar empréstimos ativos
-8 - Ver histórico de empréstimos   (ativos + devolvidos, vindos do banco)
+8 - Ver histórico de empréstimos   (submenu: todos / apenas ativos / apenas devolvidos)
 0 - Sair
 ```
+
+> A opção **8** abre um submenu de histórico (todos, apenas ativos, apenas devolvidos),
+> recuperando — agora a partir do banco — a ideia de filtros que existia na 1ª etapa.
 
 ---
 
@@ -131,8 +134,8 @@ resolve o N:N entre usuários e livros ao longo do tempo). As FKs garantem integ
 1. **Limite por tipo de usuário:** Aluno até **3** empréstimos; Professor até **5**.
    Verificado em `Biblioteca.realizarEmprestimo()` via `usuario.podeEmprestar()`, com
    o contador vindo de `EmprestimoRepository.contarAtivosPorUsuario()`.
-2. **Disponibilidade:** um livro só é emprestado se estiver disponível e sem empréstimo
-   ATIVO. Empréstimo duplicado é bloqueado.
+2. **Disponibilidade:** um livro só é emprestado se **não** houver empréstimo `ATIVO`
+   para ele na tabela `emprestimos` (fonte da verdade). Empréstimo duplicado é bloqueado.
 3. **Atualização automática:** o empréstimo marca o livro como indisponível; a devolução
    marca o empréstimo como `DEVOLVIDO` e devolve o livro a "Disponível".
 4. **Validação de existência:** livro e usuário são checados antes de qualquer operação.
@@ -140,10 +143,27 @@ resolve o N:N entre usuários e livros ao longo do tempo). As FKs garantem integ
 
 ---
 
+## Robustez e Validação de Entrada
+
+Melhorias de robustez aplicadas para que o sistema não quebre durante o uso:
+
+- **Leitura segura do teclado** (`ui/EntradaConsole.java`): toda entrada numérica é validada;
+  digitar uma letra onde se espera um número **re-pergunta** em vez de encerrar o programa.
+- **Campos obrigatórios:** título, autor, nome e matrícula/departamento não podem ficar em branco.
+- **IDs positivos:** o ID de livro/usuário deve ser maior que zero.
+- **Tipo de usuário:** o cadastro repete a pergunta até receber 1 (Aluno) ou 2 (Professor).
+- **Menu protegido:** o laço principal captura erros inesperados (ex.: falha de banco),
+  exibe uma mensagem e volta ao menu, em vez de derrubar a aplicação.
+- **Encerramento limpo:** ao sair, a conexão única do Singleton é fechada
+  (`DatabaseConnection.fechar()`), além do `Scanner`.
+
+---
+
 ## Como Executar
 
 ### Pré-requisitos
-- **JDK 8 ou superior** (testado em JDK 25).
+- **JDK 17 ou superior** (testado em JDK 21 LTS). *(A compilação funciona desde o JDK 8;
+  o requisito de 17+ vem da flag `--enable-native-access`, usada na execução.)*
 - O driver **`lib/sqlite-jdbc-3.53.2.0.jar`** já acompanha o projeto (não precisa baixar).
 
 ### Windows (mais fácil)
@@ -153,9 +173,11 @@ executar.bat
 ```
 
 ### Manual (qualquer SO)
-Compilar (gera os `.class` em `out/`):
+Compilar (gera os `.class` em `out/`). O `-sourcepath src` faz o `javac` compilar
+automaticamente todas as classes referenciadas a partir do `Main`, sem depender de
+expansão de curingas pelo terminal (funciona igual em PowerShell, cmd, Bash):
 ```bash
-javac -encoding UTF-8 -cp "lib/sqlite-jdbc-3.53.2.0.jar" -d out src/biblioteca/**/*.java
+javac -encoding UTF-8 -cp "lib/sqlite-jdbc-3.53.2.0.jar" -d out -sourcepath src src/biblioteca/main/Main.java
 ```
 Executar (Windows usa `;` no classpath; Linux/Mac usam `:`):
 ```bash
@@ -194,7 +216,9 @@ Sistema-de-Biblioteca-N2/
 │   │   ├── UsuarioRepositorySQLite.java
 │   │   └── EmprestimoRepositorySQLite.java
 │   ├── service/Biblioteca.java                 # regras de negócio
-│   └── ui/AcoesMenu.java                        # menu CLI
+│   └── ui/
+│       ├── AcoesMenu.java                       # menu CLI
+│       └── EntradaConsole.java                  # leitura segura via Scanner
 ├── sql/schema.sql                    # script de criação das tabelas
 ├── docs/
 │   ├── PADROES.md                    # onde/por quê de Singleton, Interface, Factory
@@ -209,7 +233,7 @@ Sistema-de-Biblioteca-N2/
 
 ## Tecnologias
 
-- **Java SE** (testado no JDK 25)
+- **Java SE** (testado no JDK 21 LTS)
 - **SQLite** via **JDBC** (`org.xerial:sqlite-jdbc` 3.53.2.0)
 - `java.sql` (`Connection`, `PreparedStatement`, `ResultSet`)
 - `java.util.Scanner` — interface de terminal

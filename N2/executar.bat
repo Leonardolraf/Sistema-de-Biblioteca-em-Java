@@ -10,6 +10,6 @@ setlocal
 
 set JAR=lib\sqlite-jdbc-3.53.2.0.jar
 
-java --enable-native-access=ALL-UNNAMED -cp "out;%JAR%" biblioteca.main.Main
+java -Dstdout.encoding=UTF-8 -Dstderr.encoding=UTF-8 --enable-native-access=ALL-UNNAMED -cp "out;%JAR%" biblioteca.main.Main
 
 endlocal

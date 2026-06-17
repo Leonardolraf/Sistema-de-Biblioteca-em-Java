@@ -67,6 +67,18 @@ public class DatabaseConnection {
         return conexao;
     }
 
+    // Fecha a conexão compartilhada. Deve ser chamado UMA vez, ao encerrar o
+    // programa (ver Main), garantindo um encerramento limpo do recurso.
+    public void fechar() {
+        try {
+            if (conexao != null && !conexao.isClosed()) {
+                conexao.close();
+            }
+        } catch (SQLException excecao) {
+            System.out.println("Aviso: erro ao fechar a conexão: " + excecao.getMessage());
+        }
+    }
+
     // Cria o esquema (tabelas) caso ainda não exista. Mantém o mesmo conteúdo
     // do script sql/schema.sql, garantindo que o programa rode mesmo sem rodar
     // o script manualmente.

@@ -11,6 +11,7 @@ import biblioteca.repository.UsuarioRepository;
 import biblioteca.repository.UsuarioRepositorySQLite;
 import biblioteca.service.Biblioteca;
 import biblioteca.ui.AcoesMenu;
+import biblioteca.ui.EntradaConsole;
 
 /***********************************************************************************
  * Universidade Católica de Brasília - UCB                                         *
@@ -62,52 +63,51 @@ public class Main {
 
         do {
             acoesMenu.imprimirMenuPrincipal();
-            opcao = lerOpcao(scanner);
+            opcao = EntradaConsole.lerInteiro(scanner, "");
 
-            switch (opcao) {
-                case 1:
-                    acoesMenu.cadastrarLivro(scanner, biblioteca);
-                    break;
-                case 2:
-                    acoesMenu.cadastrarUsuario(scanner, biblioteca);
-                    break;
-                case 3:
-                    acoesMenu.realizarEmprestimo(scanner, biblioteca);
-                    break;
-                case 4:
-                    acoesMenu.realizarDevolucao(scanner, biblioteca);
-                    break;
-                case 5:
-                    biblioteca.listarLivros();
-                    break;
-                case 6:
-                    biblioteca.listarUsuarios();
-                    break;
-                case 7:
-                    biblioteca.listarEmprestimosAtivos();
-                    break;
-                case 8:
-                    biblioteca.listarHistoricoEmprestimos();
-                    break;
-                case 0:
-                    System.out.println("\nSistema encerrado. Obrigado por utilizar a Biblioteca!");
-                    break;
-                default:
-                    System.out.println("Opção inválida! Por favor, escolha entre 0 e 8.");
-                    break;
+            // Protege o laço: um erro inesperado de banco em qualquer operação
+            // exibe uma mensagem e volta ao menu, em vez de encerrar o programa.
+            try {
+                switch (opcao) {
+                    case 1:
+                        acoesMenu.cadastrarLivro(scanner, biblioteca);
+                        break;
+                    case 2:
+                        acoesMenu.cadastrarUsuario(scanner, biblioteca);
+                        break;
+                    case 3:
+                        acoesMenu.realizarEmprestimo(scanner, biblioteca);
+                        break;
+                    case 4:
+                        acoesMenu.realizarDevolucao(scanner, biblioteca);
+                        break;
+                    case 5:
+                        biblioteca.listarLivros();
+                        break;
+                    case 6:
+                        biblioteca.listarUsuarios();
+                        break;
+                    case 7:
+                        biblioteca.listarEmprestimosAtivos();
+                        break;
+                    case 8:
+                        acoesMenu.exibirMenuHistorico(scanner, biblioteca);
+                        break;
+                    case 0:
+                        System.out.println("\nSistema encerrado. Obrigado por utilizar a Biblioteca!");
+                        break;
+                    default:
+                        System.out.println("Opção inválida! Por favor, escolha entre 0 e 8.");
+                        break;
+                }
+            } catch (Exception erro) {
+                System.out.println("Ocorreu um erro ao processar a operação: " + erro.getMessage());
             }
 
         } while (opcao != 0);
 
+        // Encerramento limpo dos recursos.
         scanner.close();
-    }
-
-    // Lê a opção com proteção contra entrada não numérica (evita quebrar o menu).
-    private static int lerOpcao(Scanner scanner) {
-        while (!scanner.hasNextInt()) {
-            scanner.next(); // descarta a entrada inválida
-            System.out.print("Entrada inválida. Digite um número: ");
-        }
-        return scanner.nextInt();
+        DatabaseConnection.getInstance().fechar();
     }
 }

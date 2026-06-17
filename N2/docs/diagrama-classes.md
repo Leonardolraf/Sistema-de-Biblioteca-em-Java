@@ -8,6 +8,8 @@ direto no GitHub/VS Code).
 
 > PNG gerado a partir de `diagrama-classes.puml` com PlantUML
 > (`java -jar plantuml.jar -tpng -Smetana diagrama-classes.puml`).
+> As fontes (`.puml` e o bloco Mermaid abaixo) são a versão **autoritativa** e estão
+> sempre atualizadas; se o PNG estiver defasado, basta regerá-lo com o comando acima.
 
 ---
 
@@ -48,6 +50,7 @@ classDiagram
         -String dataDevolucao
         -String status
         +isAtivo() boolean
+        +agora()$ String
     }
 
     Usuario <|-- Aluno
@@ -70,6 +73,7 @@ classDiagram
         -DatabaseConnection()
         +getInstance()$ DatabaseConnection
         +getConexao() Connection
+        +fechar()
     }
 
     class LivroRepository {
@@ -92,6 +96,7 @@ classDiagram
         +contarAtivosPorUsuario(int) int
         +livroTemEmprestimoAtivo(int) boolean
         +listarAtivos() List
+        +listarDevolvidos() List
         +listarTodos() List
     }
 
@@ -112,11 +117,12 @@ classDiagram
         <<service>>
         +adicionarLivro(Livro) boolean
         +adicionarUsuario(Usuario) boolean
-        +realizarEmprestimo(int, int)
-        +realizarDevolucao(int)
+        +realizarEmprestimo(int, int) String
+        +realizarDevolucao(int) String
         +listarLivros()
         +listarUsuarios()
         +listarEmprestimosAtivos()
+        +listarEmprestimosDevolvidos()
         +listarHistoricoEmprestimos()
     }
     Biblioteca --> LivroRepository
@@ -129,14 +135,23 @@ classDiagram
         +cadastrarUsuario(Scanner, Biblioteca)
         +realizarEmprestimo(Scanner, Biblioteca)
         +realizarDevolucao(Scanner, Biblioteca)
+        +exibirMenuHistorico(Scanner, Biblioteca)
+    }
+    class EntradaConsole {
+        <<helper>>
+        +lerInteiro(Scanner, String)$ int
+        +lerInteiroPositivo(Scanner, String)$ int
+        +lerTextoObrigatorio(Scanner, String)$ String
     }
     class Main {
         +main(String[])$
     }
     AcoesMenu ..> Biblioteca
     AcoesMenu ..> UsuarioFactory
+    AcoesMenu ..> EntradaConsole
     Main ..> Biblioteca
     Main ..> AcoesMenu
+    Main ..> EntradaConsole
     Main ..> DatabaseConnection
     Main ..> LivroRepositorySQLite
     Main ..> UsuarioRepositorySQLite
@@ -178,6 +193,7 @@ class Emprestimo {
   -dataEmprestimo : String
   -dataDevolucao : String
   -status : String
+  +{static} agora() : String
 }
 
 Usuario <|-- Aluno
@@ -198,6 +214,7 @@ class DatabaseConnection <<Singleton>> {
   -DatabaseConnection()
   +{static} getInstance() : DatabaseConnection
   +getConexao() : Connection
+  +fechar()
 }
 
 interface LivroRepository
@@ -221,11 +238,14 @@ Biblioteca --> UsuarioRepository
 Biblioteca --> EmprestimoRepository
 
 class AcoesMenu
+class EntradaConsole <<helper>>
 class Main
 AcoesMenu ..> Biblioteca
 AcoesMenu ..> UsuarioFactory
+AcoesMenu ..> EntradaConsole
 Main ..> Biblioteca
 Main ..> AcoesMenu
+Main ..> EntradaConsole
 Main ..> DatabaseConnection
 @enduml
 ```

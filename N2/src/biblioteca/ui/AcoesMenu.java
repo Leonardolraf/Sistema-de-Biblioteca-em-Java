@@ -42,9 +42,7 @@ public class AcoesMenu {
     public void cadastrarLivro(Scanner scanner, Biblioteca biblioteca) {
         System.out.println("\n--- Cadastro de Livro ---");
 
-        System.out.print("ID do livro: ");
-        int idLivro = scanner.nextInt();
-        scanner.nextLine();
+        int idLivro = EntradaConsole.lerInteiroPositivo(scanner, "ID do livro: ");
 
         // Validação antecipada: verifica duplicidade antes de pedir os demais dados.
         if (biblioteca.buscarLivro(idLivro) != null) {
@@ -53,11 +51,8 @@ public class AcoesMenu {
             return;
         }
 
-        System.out.print("Título: ");
-        String titulo = scanner.nextLine();
-
-        System.out.print("Autor: ");
-        String autor = scanner.nextLine();
+        String titulo = EntradaConsole.lerTextoObrigatorio(scanner, "Título");
+        String autor = EntradaConsole.lerTextoObrigatorio(scanner, "Autor");
 
         if (biblioteca.adicionarLivro(new Livro(idLivro, titulo, autor))) {
             System.out.println("Livro cadastrado com sucesso!");
@@ -69,18 +64,17 @@ public class AcoesMenu {
         System.out.println("Tipo de usuário:");
         System.out.println("1 - Aluno");
         System.out.println("2 - Professor");
-        System.out.print("Escolha: ");
-        int tipoUsuario = scanner.nextInt();
-        scanner.nextLine();
 
-        if (tipoUsuario != 1 && tipoUsuario != 2) {
-            System.out.println("Erro: Tipo de usuário inválido. Cadastro cancelado.");
-            return;
-        }
+        // Re-pergunta o tipo até ser 1 ou 2, em vez de cancelar por um engano.
+        int tipoUsuario;
+        do {
+            tipoUsuario = EntradaConsole.lerInteiro(scanner, "Escolha: ");
+            if (tipoUsuario != 1 && tipoUsuario != 2) {
+                System.out.println("Opção inválida. Digite 1 (Aluno) ou 2 (Professor).");
+            }
+        } while (tipoUsuario != 1 && tipoUsuario != 2);
 
-        System.out.print("ID do usuário: ");
-        int idUsuario = scanner.nextInt();
-        scanner.nextLine();
+        int idUsuario = EntradaConsole.lerInteiroPositivo(scanner, "ID do usuário: ");
 
         // Validação antecipada de duplicidade.
         if (biblioteca.buscarUsuario(idUsuario) != null) {
@@ -89,12 +83,10 @@ public class AcoesMenu {
             return;
         }
 
-        System.out.print("Nome: ");
-        String nome = scanner.nextLine();
+        String nome = EntradaConsole.lerTextoObrigatorio(scanner, "Nome");
 
         String rotulo = (tipoUsuario == 1) ? "Matrícula" : "Departamento";
-        System.out.print(rotulo + ": ");
-        String detalhe = scanner.nextLine();
+        String detalhe = EntradaConsole.lerTextoObrigatorio(scanner, rotulo);
 
         // A criação da subclasse correta é responsabilidade da Factory.
         Usuario usuario = UsuarioFactory.criarPorOpcao(tipoUsuario, idUsuario, nome, detalhe);
@@ -106,21 +98,42 @@ public class AcoesMenu {
     public void realizarEmprestimo(Scanner scanner, Biblioteca biblioteca) {
         System.out.println("\n--- Realizar Empréstimo ---");
 
-        System.out.print("ID do livro: ");
-        int idLivro = scanner.nextInt();
+        int idLivro = EntradaConsole.lerInteiro(scanner, "ID do livro: ");
+        int idUsuario = EntradaConsole.lerInteiro(scanner, "ID do usuário: ");
 
-        System.out.print("ID do usuário: ");
-        int idUsuario = scanner.nextInt();
-
-        biblioteca.realizarEmprestimo(idLivro, idUsuario);
+        // O serviço aplica as regras e devolve a mensagem; a UI apenas exibe.
+        System.out.println(biblioteca.realizarEmprestimo(idLivro, idUsuario));
     }
 
     public void realizarDevolucao(Scanner scanner, Biblioteca biblioteca) {
         System.out.println("\n--- Realizar Devolução ---");
 
-        System.out.print("ID do livro a devolver: ");
-        int idLivro = scanner.nextInt();
+        int idLivro = EntradaConsole.lerInteiro(scanner, "ID do livro a devolver: ");
 
-        biblioteca.realizarDevolucao(idLivro);
+        System.out.println(biblioteca.realizarDevolucao(idLivro));
+    }
+
+    // Submenu de histórico (recupera a ideia de filtros do N1, agora vinda do banco).
+    public void exibirMenuHistorico(Scanner scanner, Biblioteca biblioteca) {
+        System.out.println("\n--- Histórico de Empréstimos ---");
+        System.out.println("1 - Todos (ativos e devolvidos)");
+        System.out.println("2 - Apenas ativos");
+        System.out.println("3 - Apenas devolvidos");
+        int opcao = EntradaConsole.lerInteiro(scanner, "Escolha: ");
+
+        switch (opcao) {
+            case 1:
+                biblioteca.listarHistoricoEmprestimos();
+                break;
+            case 2:
+                biblioteca.listarEmprestimosAtivos();
+                break;
+            case 3:
+                biblioteca.listarEmprestimosDevolvidos();
+                break;
+            default:
+                System.out.println("Opção inválida.");
+                break;
+        }
     }
 }

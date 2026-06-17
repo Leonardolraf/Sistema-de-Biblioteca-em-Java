@@ -63,10 +63,43 @@ marcando o empréstimo ATIVO daquele livro como `DEVOLVIDO` e gravando a `data_d
 "Disponível" via `atualizarDisponibilidade(idLivro, true)`.
 
 ### 10. Como o sistema garante que um livro não seja emprestado duas vezes?
-Duas verificações em `realizarEmprestimo()`: o flag `livro.isDisponivel()` **e**
-`emprestimoRepository.livroTemEmprestimoAtivo(idLivro)` (checa se há linha com
-status 'ATIVO' para aquele livro). Se qualquer uma indicar que está emprestado, a
-operação é negada antes de gravar.
+A **tabela de empréstimos é a fonte da verdade**: antes de gravar,
+`realizarEmprestimo()` chama `emprestimoRepository.livroTemEmprestimoAtivo(idLivro)`,
+que faz `SELECT 1 ... WHERE id_livro = ? AND status = 'ATIVO'`. Se já existe um
+empréstimo ativo para aquele livro, a operação é negada. O campo `disponivel` é mantido
+e exibido nas listagens, mas **não** entra na decisão — assim, mesmo que esse espelho
+fique dessincronizado, o livro nunca é bloqueado ou emprestado indevidamente.
+
+---
+
+## Perguntas extras (melhorias de robustez desta revisão)
+
+### 11. Como o sistema evita travar se o usuário digitar uma letra onde se espera um número?
+Toda leitura numérica passa pelo auxiliar `EntradaConsole.lerInteiro()`
+(`ui/EntradaConsole.java`), que usa `scanner.hasNextInt()` num laço: enquanto a entrada
+não for um número, descarta o token inválido e **re-pergunta**, em vez de lançar
+`InputMismatchException` e encerrar o programa. Há ainda `lerInteiroPositivo()` (IDs > 0)
+e `lerTextoObrigatorio()` (não aceita campo em branco).
+
+### 12. O que acontece se ocorrer um erro inesperado no banco durante uma operação?
+No laço do menu (`Main`), o `switch` está dentro de um `try/catch`. Se um repositório
+lançar uma exceção (ex.: falha de SQL), a mensagem é exibida e o sistema **volta ao menu**
+em vez de encerrar.
+
+### 13. Como é feito o encerramento do programa?
+Ao escolher "0 - Sair", após o laço o `Main` fecha o `Scanner` e chama
+`DatabaseConnection.getInstance().fechar()`, encerrando de forma limpa a conexão única
+do Singleton (ponto único de fechamento do recurso).
+
+### 14. Por que a data/hora não está duplicada em duas classes?
+O carimbo de data/hora foi centralizado em `Emprestimo.agora()` (estático). Tanto o
+serviço (data de empréstimo) quanto o repositório (data de devolução) chamam o mesmo
+método, evitando duplicação do formatador (DRY) e garantindo formato idêntico no banco.
+
+### 15. Onde ficam as mensagens de empréstimo/devolução agora?
+A regra continua no serviço (`Biblioteca`), mas `realizarEmprestimo` e `realizarDevolucao`
+agora **retornam a mensagem** (String) e quem imprime é a UI (`AcoesMenu`), reforçando a
+separação entre regra de negócio e apresentação.
 
 ---
 

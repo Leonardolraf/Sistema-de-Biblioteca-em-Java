@@ -1,7 +1,5 @@
 package biblioteca.service;
 
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 import biblioteca.model.Emprestimo;
@@ -29,9 +27,6 @@ public class Biblioteca {
     private final LivroRepository livroRepository;
     private final UsuarioRepository usuarioRepository;
     private final EmprestimoRepository emprestimoRepository;
-
-    private static final DateTimeFormatter FORMATO_DATA_HORA =
-            DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
 
     public Biblioteca(LivroRepository livroRepository,
                       UsuarioRepository usuarioRepository,
@@ -74,55 +69,61 @@ public class Biblioteca {
 
     // --------------------------- EMPRÉSTIMO ------------------------------
 
-    public void realizarEmprestimo(int idLivro, int idUsuario) {
+    // Retorna a mensagem (sucesso ou erro) para a camada de apresentação imprimir.
+    // A regra de negócio fica aqui; quem exibe é a UI (separação de responsabilidades).
+    public String realizarEmprestimo(int idLivro, int idUsuario) {
         Livro livro = livroRepository.buscarPorId(idLivro);
         Usuario usuario = usuarioRepository.buscarPorId(idUsuario);
 
         // Regra 1: existência.
         if (livro == null || usuario == null) {
-            System.out.println("Erro: Livro ou usuário não encontrado.");
-            return;
+            return "Erro: Livro ou usuário não encontrado.";
         }
 
-        // Regra 2: disponibilidade. A tabela de empréstimos é a fonte de verdade;
-        // o flag "disponivel" é apenas um espelho do estado do livro.
-        if (!livro.isDisponivel() || emprestimoRepository.livroTemEmprestimoAtivo(idLivro)) {
-            System.out.println("Erro: O livro '" + livro.getTitulo() + "' já está emprestado.");
-            return;
+        // Regra 2: disponibilidade. A tabela de empréstimos é a ÚNICA fonte de verdade:
+        // o livro está emprestado se existir um empréstimo ATIVO para ele. O flag
+        // "disponivel" é apenas um espelho exibido nas listagens, por isso NÃO participa
+        // da decisão (assim um flag eventualmente dessincronizado nunca trava o livro).
+        if (emprestimoRepository.livroTemEmprestimoAtivo(idLivro)) {
+            return "Erro: O livro '" + livro.getTitulo() + "' já está emprestado.";
         }
 
         // Regra 3: limite por tipo de usuário. O contador vem do banco (COUNT),
         // garantindo que reflete o estado real mesmo após reiniciar o programa.
         usuario.setLivrosEmprestados(emprestimoRepository.contarAtivosPorUsuario(idUsuario));
         if (!usuario.podeEmprestar()) {
-            System.out.println("Erro: O usuário '" + usuario.getNome()
-                    + "' atingiu o limite de " + usuario.getLimiteEmprestimos() + " empréstimos.");
-            return;
+            return "Erro: O usuário '" + usuario.getNome()
+                    + "' atingiu o limite de " + usuario.getLimiteEmprestimos() + " empréstimos.";
         }
 
         // Efetiva: registra o empréstimo e atualiza a disponibilidade do livro.
-        emprestimoRepository.registrar(new Emprestimo(usuario, livro, agora()));
+        emprestimoRepository.registrar(new Emprestimo(usuario, livro, Emprestimo.agora()));
         livroRepository.atualizarDisponibilidade(idLivro, false);
 
-        System.out.println("Empréstimo realizado com sucesso!");
-        System.out.println("Livro: " + livro.getTitulo() + " -> Usuário: " + usuario.getNome());
+        return "Empréstimo realizado com sucesso!\n"
+                + "Livro: " + livro.getTitulo() + " -> Usuário: " + usuario.getNome();
     }
 
     // ---------------------------- DEVOLUÇÃO ------------------------------
 
-    public void realizarDevolucao(int idLivro) {
+    public String realizarDevolucao(int idLivro) {
+        // Valida existência primeiro, para distinguir "livro inexistente" de
+        // "livro existe, mas não está emprestado" (mensagens mais claras).
+        Livro livro = livroRepository.buscarPorId(idLivro);
+        if (livro == null) {
+            return "Erro: Livro com ID " + idLivro + " não existe.";
+        }
+
         boolean devolvido = emprestimoRepository.devolverPorLivro(idLivro);
         if (!devolvido) {
-            System.out.println("Erro: Empréstimo ativo não encontrado para o livro informado.");
-            return;
+            return "Erro: Empréstimo ativo não encontrado para o livro '" + livro.getTitulo() + "'.";
         }
+
         // Atualiza automaticamente a disponibilidade do livro após a devolução.
         livroRepository.atualizarDisponibilidade(idLivro, true);
 
-        Livro livro = livroRepository.buscarPorId(idLivro);
-        String titulo = (livro != null) ? livro.getTitulo() : ("ID " + idLivro);
-        System.out.println("Devolução realizada com sucesso!");
-        System.out.println("Livro '" + titulo + "' devolvido.");
+        return "Devolução realizada com sucesso!\n"
+                + "Livro '" + livro.getTitulo() + "' devolvido.";
     }
 
     // ----------------------------- LISTAGENS -----------------------------
@@ -169,6 +170,19 @@ public class Biblioteca {
         System.out.println("=========================================");
     }
 
+    public void listarEmprestimosDevolvidos() {
+        List<Emprestimo> devolvidos = emprestimoRepository.listarDevolvidos();
+        if (devolvidos.isEmpty()) {
+            System.out.println("Nenhum empréstimo devolvido.");
+            return;
+        }
+        System.out.println("\n========== EMPRÉSTIMOS DEVOLVIDOS ==========");
+        for (Emprestimo emprestimo : devolvidos) {
+            System.out.println(emprestimo);
+        }
+        System.out.println("===========================================");
+    }
+
     // Histórico completo = todos os empréstimos (ativos e devolvidos) no banco.
     public void listarHistoricoEmprestimos() {
         List<Emprestimo> todos = emprestimoRepository.listarTodos();
@@ -181,9 +195,5 @@ public class Biblioteca {
             System.out.println(emprestimo);
         }
         System.out.println("=============================================");
-    }
-
-    private String agora() {
-        return LocalDateTime.now().format(FORMATO_DATA_HORA);
     }
 }
